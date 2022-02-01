@@ -1,12 +1,28 @@
 from pydub import AudioSegment
 
 def mean(array):
+  """
+  Calculates the mean of the absolute values in a list of numbers
+  
+  Args:
+    array (list): array which we want to calculate the mean
+  
+  Returns:
+    float: mean of the absolute values of the elements of the array
+  """
   sum = 0
   for element in array:
     sum += abs(element)
   return sum / len(array)
 
 def generateFeaturedClip(file, second_rate):
+  """
+  Generates a 30 seconds clip with the loudest part of the audio
+  
+  Args:
+    file (string): path of the wav file
+    second_rate (integer): every how many seconds a 30 second check will be done
+  """
   audio = AudioSegment.from_wav(file)
   best_mean = 0
   best_second = 0

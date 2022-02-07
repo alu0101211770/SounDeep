@@ -35,6 +35,6 @@ def generateFeaturedClip(file, second_rate):
       best_second = i * 1000 * second_rate
       print(best_mean)
   newAudio = audio[best_second:30000+best_second]
-  newAudio.export('best-moment.wav', format="wav")
+  newAudio.export('./audio/best-moment.wav', format="wav")
 
 # generateFeaturedClip("phaseone.wav", 1)

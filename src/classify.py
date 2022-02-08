@@ -9,6 +9,8 @@ import numpy as np
 
 
 def classify_theme(theme_file):
+    if not os.path.exists('./tmp/'):
+      os.makedirs('tmp')
     model = load_model('./model/model_architecture.json',
                       './model/model_weights.h5')
     clip = generateFeaturedClip(theme_file)

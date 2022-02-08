@@ -1,39 +1,30 @@
-from cgitb import text
-from email.mime import audio
 from tkinter import *
-from os import system
-from turtle import color, left
 import pygame
-from tkinter import filedialog
 import wave
-from keras import layers
-from keras.layers import (Input, Add, Dense, Activation, ZeroPadding2D, BatchNormalization, Flatten, 
-                          Conv2D, AveragePooling2D, MaxPooling2D, GlobalMaxPooling2D, Dropout, LSTM)
-from keras.models import Model, Sequential, model_from_json
-from keras.preprocessing import image
-from keras.utils import layer_utils
-from clip import *
 import librosa
 import librosa.display
 import numpy as np
-import matplotlib 
-from matplotlib.figure import Figure
 import matplotlib.pyplot as plt
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from PIL import ImageTk,Image,ImageOps
 
-root = Tk()
-root.title('SounDeep')
-root.geometry("600x400")
-logo = PhotoImage(file="./GUI/img/logonormal.png")
-root.iconphoto(False, logo)
-menu = Menu(root, tearoff=False)
-root.config(menu=menu)
-subMenu = Menu(root, tearoff=False)
-menu.add_cascade(label="File", menu=subMenu)
-pygame.init()
-audioFile = None
-resultText = "Not yet predicted"
+
+# from cgitb import text
+# from email.mime import audio
+# from tkinter import filedialog
+# from os import system
+# from turtle import color, left
+# from keras import layers
+# from keras.layers import (Input, Add, Dense, Activation, ZeroPadding2D, BatchNormalization, Flatten, 
+                          # Conv2D, AveragePooling2D, MaxPooling2D, GlobalMaxPooling2D, Dropout, LSTM)
+# from keras.models import Model, Sequential, model_from_json
+# from keras.preprocessing import image
+# from keras.utils import layer_utils
+# from clip import *
+
+# from matplotlib.figure import Figure
+# from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
+
+
 
 def playOriginal():
   global audioFile
@@ -44,7 +35,7 @@ def playOriginal():
   else: 
     createAlert()
 
-def spectogram():
+def mel_spectrogram():
   y,sr = librosa.load('./audio/best-moment.wav', duration=3)
   S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000, hop_length=((1 + np.array(y).shape[0]) // 64), n_fft=2048)
   #S = librosa.feature.melspectrogram(y=y, sr=sr)
@@ -81,7 +72,7 @@ def loadAudio():
   #audio = wave.open(filename)
   audioFile = filename
   generateFeaturedClip(audioFile, 30)
-  spectogram()
+  mel_spectrogram()
 
 def playCutVersion():
   if (audioFile != None):
@@ -119,6 +110,19 @@ def on_leave(e):
   e.widget['background'] = 'SystemButtonFace'
 
 
+root = Tk()
+root.title('SounDeep')
+root.geometry("600x400")
+logo = PhotoImage(file="./GUI/img/logonormal.png")
+root.iconphoto(False, logo)
+menu = Menu(root, tearoff=False)
+root.config(menu=menu)
+subMenu = Menu(root, tearoff=False)
+menu.add_cascade(label="File", menu=subMenu)
+pygame.init()
+audioFile = None
+resultText = "Not yet predicted"
+
 # Labels, buttons, UI stuff
 main_frame = Frame(root, width=600, height=400)
 main_frame.pack()
@@ -139,10 +143,12 @@ play_button = Button(root, text="Play song  ", font=("Modern", 16), command=play
 play_button.place(x=180,y=110)
 play_button.bind("<Enter>", on_enter)
 play_button.bind("<Leave>", on_leave)
+
 stop_button = Button(root, text="Stop song", font=("Modern", 16), command=stopOriginal)
 stop_button.place(x=320,y=110)
 stop_button.bind("<Enter>", on_enter)
 stop_button.bind("<Leave>", on_leave)
+
 clipLabel = Label(main_frame, text="Clipped song: ",font=("Modern",12))
 clipLabel.place(x=50,y=260)
 clip_button = Button(root, text="Play clip  ",background="#3C85C7", font=("Modern", 16), command=playCutVersion)

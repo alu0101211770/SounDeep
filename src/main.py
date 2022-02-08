@@ -128,9 +128,7 @@ def predict(label):
 
 def generateMel(label):
     y, sr = librosa.load('./audio/best-moment.wav', duration=30)
-    S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000, hop_length=(
-        (1 + np.array(y).shape[0]) // 129), n_fft=2048)
-    # fig = plt.figure()
+    S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000, hop_length=512, n_fft=2048)
     fig, ax = plt.subplots()
     S_dB = librosa.power_to_db(S, ref=np.max)
     img = librosa.display.specshow(S_dB, x_axis='time',

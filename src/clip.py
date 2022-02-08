@@ -1,4 +1,5 @@
 from pydub import AudioSegment
+from split_wav import getFileName
 
 def mean(array):
   """
@@ -15,7 +16,7 @@ def mean(array):
     sum += abs(element)
   return sum / len(array)
 
-def generateFeaturedClip(audio):
+def generateFeaturedClip(audio_file):
   """
   Generates a 30 seconds clip with the loudest part of the audio
   
@@ -23,6 +24,7 @@ def generateFeaturedClip(audio):
     file (string): path of the wav file
     second_rate (integer): every how many seconds a 30 second check will be done
   """
+  audio = AudioSegment.from_wav(audio_file)
   second_rate = int(audio.duration_seconds * 0.1)
   best_mean = 0
   best_second = 0
@@ -33,4 +35,6 @@ def generateFeaturedClip(audio):
       best_mean = newMean
       best_second = i * 1000 * second_rate
   newAudio = audio[best_second:30000+best_second]
+  newAudio.export('./audio/' + getFileName(audio_file) + '.wav', format="wav")
+
   return newAudio

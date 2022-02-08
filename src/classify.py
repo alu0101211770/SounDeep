@@ -48,5 +48,3 @@ def classify_theme(theme_file):
         os.remove(path_file)
 
     return classified_genres
-  
-classify_theme('./audio/blues.00000.wav')

@@ -1,88 +1,41 @@
-from tkinter import *
+import tkinter as tk
+from tkinter import Button, Label, filedialog
+from tkinter import ttk
+from classify import classify_theme
+import clip
 import pygame
-import wave
+from PIL import ImageTk, Image
 import librosa
 import librosa.display
 import numpy as np
 import matplotlib.pyplot as plt
-from PIL import ImageTk,Image,ImageOps
+import os
 
-
-# from cgitb import text
-# from email.mime import audio
-# from tkinter import filedialog
-# from os import system
-# from turtle import color, left
-# from keras import layers
-# from keras.layers import (Input, Add, Dense, Activation, ZeroPadding2D, BatchNormalization, Flatten, 
-                          # Conv2D, AveragePooling2D, MaxPooling2D, GlobalMaxPooling2D, Dropout, LSTM)
-# from keras.models import Model, Sequential, model_from_json
-# from keras.preprocessing import image
-# from keras.utils import layer_utils
-# from clip import *
-
-# from matplotlib.figure import Figure
-# from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
-
-
-
-def playOriginal():
-  global audioFile
-  print(audioFile)
-  if (audioFile != None):
-    pygame.mixer.music.load(audioFile)
-    pygame.mixer.music.play(loops=0)
-  else: 
-    createAlert()
-
-def mel_spectrogram():
-  y,sr = librosa.load('./audio/best-moment.wav', duration=3)
-  S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000, hop_length=((1 + np.array(y).shape[0]) // 64), n_fft=2048)
-  #S = librosa.feature.melspectrogram(y=y, sr=sr)
-  fig = plt.figure()
-  canvas = FigureCanvas(fig)
-  #plt.imsave('specto.png', librosa.power_to_db(S,ref=np.max))
-  #plt.imshow(librosa.power_to_db(S,ref=np.max))
-  #librosa.display.specshow(librosa.power_to_db(S,ref=np.max))
-  model = load_model()
-  print(model)
-  #predicted = model.predict()
-  #global resulText
-  #resultText = predicted
-  plt.show()
-  root.mainloop()
-  ''''
-  myImage = ImageTk.PhotoImage(image)
-  window = Toplevel(root)
-  window.title('specto')
-  imgLabel = Label(window, image=myImage, text='specto')
-  imgLabel.pack()
-  window.mainloop()
-  '''
-
-def stopOriginal():
-  pygame.mixer.music.stop()
-
-def stopCutVersion():
-  pygame.mixer.music.stop()
+audio_file = ''
+short_audio = ''
+is_paused = False
+is_paused_fr = False
+already = False
+already_fr = False
+load1 = False
+load2 = False
+result = 'Not yet'
+root = tk.Tk()
+pygame.init()
 
 def loadAudio():
-  global audioFile
-  filename = filedialog.askopenfilename(initialdir="/Images", title="Select a File", filetypes=[('Wav files', '*.wav'), ('Mp3 files', '*.mp3')])
-  #audio = wave.open(filename)
-  audioFile = filename
-  generateFeaturedClip(audioFile, 30)
-  mel_spectrogram()
-
-def playCutVersion():
-  if (audioFile != None):
-    pygame.mixer.music.load('./audio/best-moment.wav')
-    pygame.mixer.music.play(loops=0)
-  else: 
-    createAlert()
+    global audio_file, short_audio, theme, load1
+    filename = filedialog.askopenfilename(initialdir="/", title="Select a File", filetypes=[('Wav files', '*.wav')])
+    audio_file = filename  if filename != '' else audio_file
+    if (audio_file != ''):
+      short_audio = clip.generateFeaturedClip(audio_file)
+      pygame.mixer.music.load(audio_file)
+      load1 = True
+      generateMel()
+      print(audio_file)
 
 def createAlert():
-  alert = Toplevel(root)
+  alert = tk.Toplevel(root)
   window_height = 100
   window_width = 250
   screen_width = root.winfo_screenwidth()
@@ -94,76 +47,157 @@ def createAlert():
   alertLabel.pack()
   alert.after(5000, lambda: alert.destroy())
   alert.mainloop()
+
+def playThemeAudio():
+  global audio_file, is_paused, already, already_fr, load1, load2
+  if (not load1):
+    pygame.mixer.music.load(audio_file)
+    load1 = True
+    load2 = False
+    is_paused = True
+  if (audio_file != ''):
+    if (is_paused and already):
+      pygame.mixer.music.unpause()
+      is_paused = False
+    elif (not is_paused and already):
+      pygame.mixer.music.pause()
+      is_paused = True
+    else:
+      pygame.mixer.music.play(loops=0)
+      already = True
+      is_paused = False
+  else: 
+    createAlert()
+
+
+def stopThemeAudio():
+  global load1, already
+  pygame.mixer.music.stop()
+  load1 = False
+  already = False
+
+def playFragmentAudio():
+  global short_audio, is_paused_fr, already_fr, load1, load2
+  if (not load2):
+    pygame.mixer.music.load('./audio/best-moment.wav')
+    load2 = True
+    load1 = False
+    is_paused_fr = True
+  if (short_audio != ''):
+    if (is_paused_fr and already_fr):
+      pygame.mixer.music.unpause()
+      is_paused_fr = False
+    elif (not is_paused_fr and already_fr):
+      pygame.mixer.music.pause()
+      is_paused_fr = True
+    else:
+      pygame.mixer.music.play(loops=0)
+      already_fr = True
+      is_paused_fr = False
+  else: 
+    createAlert()
+
+def stopFragmentAudio():
+  global load2, already_fr
+  pygame.mixer.music.stop()
+  load2 = False
+  already_fr = False
+
+def predict(label):
+  global result, root
+  results = classify_theme('./audio/best-moment.wav')
+  results_string = f'Predicted:\n1.{results[0]}\n2.{results[1]}\n3.{results[2]}'
+  label.configure(text=results_string)
+
+def generateMel():
+  y,sr = librosa.load('./audio/best-moment.wav', duration=30)
+  S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000, hop_length=((1 + np.array(y).shape[0]) // 129), n_fft=2048)
+  # fig = plt.figure()
+  fig, ax = plt.subplots()
+  S_dB = librosa.power_to_db(S, ref=np.max)
+  img = librosa.display.specshow(S_dB, x_axis='time',
+                          y_axis='mel', sr=sr,
+                          fmax=8000, ax=ax)
+  fig.colorbar(img, ax=ax, format='%+2.0f dB')
+  ax.set(title='Mel-frequency spectrogram')
+
+  plt.savefig('./GUI/img/spectrogram.png')
+
   
 def quitr():
   root.destroy()
 
-def load_model():
-  model = model_from_json(open('./model/model_architecture.json').read())
-  model.load_weights('./model/model_weights.h5')
-  #model.compile(optimizer='sgd', loss='categorical_crossentropy', metrics=['accuracy', get_f1])
-  return model
- 
-def on_enter(e):
-  e.widget['background'] = '#7393BC'
-def on_leave(e):
-  e.widget['background'] = 'SystemButtonFace'
-
-
-root = Tk()
-root.title('SounDeep')
-root.geometry("600x400")
-logo = PhotoImage(file="./GUI/img/logonormal.png")
+root.minsize(250, 250)
+root.title("SounDeep")
+root.grid_rowconfigure(0, weight=1)
+root.grid_columnconfigure(0, weight=1)
+logo = tk.PhotoImage(file="./GUI/img/logonormal.png")
 root.iconphoto(False, logo)
-menu = Menu(root, tearoff=False)
-root.config(menu=menu)
-subMenu = Menu(root, tearoff=False)
-menu.add_cascade(label="File", menu=subMenu)
-pygame.init()
-audioFile = None
-resultText = "Not yet predicted"
 
-# Labels, buttons, UI stuff
-main_frame = Frame(root, width=600, height=400)
-main_frame.pack()
-img = Image.open("./GUI/img/logopequeño.png")
-bgImg = Image.open("./GUI/img/background2.png")
-welcomeImg = Image.open("./GUI/img/welcomef.png")
-bgImg.paste(img,(480,300), img)
-bgImg.paste(welcomeImg,(140,20),welcomeImg)
-bgImg.save('./GUI/img/NewImg.png',"PNG")
-bg = PhotoImage(file="./GUI/img/NewImg.png")
-bgLabel = Label(main_frame, image=bg)
-bgLabel.place(x = 0, y = 0)
-#welcomeLabel = Label(main_frame,image=welcomeImg,font=("Modern",22))
-#welcomeLabel.place(x=140,y=20)
-originalLabel = Label(main_frame, text="Original song: ",font=("Modern",12))
-originalLabel.place(x=50,y=120)
-play_button = Button(root, text="Play song  ", font=("Modern", 16), command=playOriginal)
-play_button.place(x=180,y=110)
-play_button.bind("<Enter>", on_enter)
-play_button.bind("<Leave>", on_leave)
+content = tk.Frame(root)
+title = tk.Label(content, text="Welcome to SounDeep!", font=('Times 14'), height = 3)
 
-stop_button = Button(root, text="Stop song", font=("Modern", 16), command=stopOriginal)
-stop_button.place(x=320,y=110)
-stop_button.bind("<Enter>", on_enter)
-stop_button.bind("<Leave>", on_leave)
+theme = ttk.Frame(content)
+audio_fragment = ttk.Frame(content)
+spectrogram = ttk.Frame(content)
+classify = ttk.Frame(content)
 
-clipLabel = Label(main_frame, text="Clipped song: ",font=("Modern",12))
-clipLabel.place(x=50,y=260)
-clip_button = Button(root, text="Play clip  ",background="#3C85C7", font=("Modern", 16), command=playCutVersion)
-clip_button.place(x=180,y=240)
-clip_button.bind("<Enter>", on_enter)
-clip_button.bind("<Leave>", on_leave)
-clip_stop_button = Button(root, text="Stop clip", font=("Modern", 16), command=stopCutVersion)
-clip_stop_button.place(x=320,y=240)
-clip_stop_button.bind("<Enter>", on_enter)
-clip_stop_button.bind("<Leave>", on_leave)
-predictLabel = Label(main_frame, text="Prediction: ",font=("Modern",12))
-resultLabel = Label(main_frame, text=resultText,font=("Modern",12))
-resultLabel.configure(background="#DFA01F")
-resultLabel.place(x=180,y=340)
-predictLabel.place(x=50,y=340)
-subMenu.add_command(label="Load", command=loadAudio)
+add_theme_button = ttk.Button(theme, text="Load theme", command = loadAudio)
+playOriginal = ttk.Button(theme, text="Play/Pause theme", command=playThemeAudio)
+stopOriginal = ttk.Button(theme, text="Stop theme", command=stopThemeAudio)
+playFragment = ttk.Button(audio_fragment, text="Play/Pause clip", command=playFragmentAudio)
+stopFragment = ttk.Button(audio_fragment, text="Stop clip", command=stopFragmentAudio)
+test_result = ttk.Label(classify, text=result, font=('Times, 14'))
+test_button = ttk.Button(classify, text="Classify", command=lambda:predict(test_result))
+if (os.path.exists('./GUI/img/spectrogram.png')):
+  img = Image.open('./GUI/img/spectrogram.png')
+  final = img.resize((int(img.size[0]/2),int(img.size[1]/2)))
+  spectro = ImageTk.PhotoImage(final)
+  
+mel = ttk.Label(spectrogram, image=spectro)
+content.grid(column=0, row=0, sticky=(tk.N, tk.S, tk.E, tk.W))
+title.grid(column= 0, row= 0, columnspan=4)
+theme.grid(column=2, row=1)
+classify.grid(column=2, row=3)
+audio_fragment.grid(column=1, row=2)
+spectrogram.grid(column=2,row=2)
+playOriginal.grid(column=2,row=2,pady=10)
+stopOriginal.grid(column=2,row=3)
+add_theme_button.grid(column=2, row=1)
+playFragment.grid(column=1,row=2,pady=10,padx=10)
+stopFragment.grid(column=1,row=3,padx=10)
+test_button.grid(column=0, row=0, columnspan=2,pady=10)
+test_result.grid(column=0,row=1, columnspan=2,pady=10)
+mel.grid(column=2,row=2)
+
+root.columnconfigure(0, weight=2)
+root.rowconfigure(0, weight=2)
+
+content.columnconfigure(0, weight=1)
+content.columnconfigure(1, weight=1)
+content.columnconfigure(2, weight=1)
+content.columnconfigure(3, weight=1)
+content.columnconfigure(4, weight=1)
+content.rowconfigure(0, weight=1)
+content.rowconfigure(1, weight=1)
+content.rowconfigure(1, weight=1)
+content.rowconfigure(2, weight=1)
+content.rowconfigure(2, weight=1)
+content.rowconfigure(3,weight=1)
+
+theme.rowconfigure(0, weight=1)
+theme.columnconfigure(0, weight=1)
+theme.rowconfigure(0,weight=1)
+
+audio_fragment.rowconfigure(0, weight=1)
+audio_fragment.columnconfigure(0, weight=1)
+audio_fragment.rowconfigure(1, weight=1)
+audio_fragment.columnconfigure(1, weight=1)
+audio_fragment.rowconfigure(2, weight=1)
+audio_fragment.columnconfigure(2, weight=1)
+audio_fragment.rowconfigure(3, weight=1)
+audio_fragment.columnconfigure(4, weight=1)
+
 root.protocol("WM_DELETE_WINDOW", quitr)
 root.mainloop()
+

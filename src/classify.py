@@ -23,11 +23,11 @@ def classify_theme(theme_file):
         path = os.path.join('./tmp/', wav)
         y, sr = librosa.load(path, duration=3)
         S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000, hop_length=(
-            (1 + np.array(y).shape[0]) // 64), n_fft=2048)
+            (1 + np.array(y).shape[0]) // 129), n_fft=2048)
         mel_spectrograms.append(S)
         
     mel_spectrograms = np.array(mel_spectrograms)
-    mel_spectrograms = mel_spectrograms.reshape(-1, 128, 65, 1)
+    mel_spectrograms = mel_spectrograms.reshape(-1, 128, 130, 1)
 
     predictions = model.predict(mel_spectrograms)
     result = [[sum(prediction)/len(prediction)] for prediction in np.transpose(predictions)]

@@ -1,5 +1,6 @@
 from pydub import AudioSegment
 from split_wav import getFileName
+import os
 
 def mean(array):
   """
@@ -35,6 +36,8 @@ def generateFeaturedClip(audio_file):
       best_mean = newMean
       best_second = i * 1000 * second_rate
   newAudio = audio[best_second:30000+best_second]
-  newAudio.export('./audio/' + getFileName(audio_file) + '.wav', format="wav")
+  if os.path.exists('./audio/best-moment.wav'):
+    os.remove('./audio/best-moment.wav')
+  newAudio.export('./audio/' + 'best-moment' + '.wav', format="wav")
 
   return newAudio

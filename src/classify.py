@@ -11,8 +11,8 @@ import numpy as np
 def classify_theme(theme_file):
     model = load_model('./model/model_architecture.json',
                       './model/model_weights.h5')
-    theme = AudioSegment.from_wav(theme_file)
-    clip = generateFeaturedClip(theme)
+    #theme = AudioSegment.from_wav(theme_file)
+    clip = generateFeaturedClip(theme_file)
     splitIntoFragments(theme_file, clip, './tmp/')
 
     # mel_spectrograms will be an np.array with the shape [10, 128, 130, 1]

@@ -4,6 +4,11 @@ from tkinter import ttk
 import clip
 import pygame
 from PIL import ImageTk, Image
+import librosa
+import librosa.display
+import numpy as np
+import matplotlib.pyplot as plt
+import os
 
 audio_file = ''
 short_audio = ''
@@ -49,13 +54,22 @@ def stopFragmentAudio():
   pass
 
 def predict():
-  #results = clasify()
+  #results = classify()
   pass
-def showMel():
-  y,sr = librosa.load('.audio/best-moment.wav', duration=30)
-  S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000, hop_length=((1 + np.array(y).shape[0]) // 64), n_fft=2048)
-  fig = plt.figure()
-  plt.imsave('./GUI/img/spectrogram.png', librosa.power_to_db(S,ref=np.max))
+def generateMel():
+  y,sr = librosa.load('./audio/best-moment.wav', duration=30)
+  S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=128, fmax=8000, hop_length=((1 + np.array(y).shape[0]) // 129), n_fft=2048)
+  # fig = plt.figure()
+  fig, ax = plt.subplots()
+  S_dB = librosa.power_to_db(S, ref=np.max)
+  img = librosa.display.specshow(S_dB, x_axis='time',
+                          y_axis='mel', sr=sr,
+                          fmax=8000, ax=ax)
+  fig.colorbar(img, ax=ax, format='%+2.0f dB')
+  ax.set(title='Mel-frequency spectrogram')
+
+  plt.savefig('./GUI/img/spectrogram.png')
+
 
 def createAlert():
   alert = tk.Toplevel(root)
@@ -71,6 +85,7 @@ def createAlert():
   alert.after(5000, lambda: alert.destroy())
   alert.mainloop()
 
+generateMel()
 root.minsize(250, 250)
 root.title("SounDeep")
 root.grid_rowconfigure(0, weight=1)
@@ -84,21 +99,23 @@ title = tk.Label(content, text="Welcome to SounDeep!", font=('Times 14'), height
 theme = ttk.Frame(content)
 audio_fragment = ttk.Frame(content)
 spectrogram = ttk.Frame(content)
-clasify = ttk.Frame(content)
+classify = ttk.Frame(content)
 
 add_theme_button = ttk.Button(theme, text="Add theme", command = loadAudio)
 playOriginal = ttk.Button(theme, text="Play/Pause theme", command=playThemeAudio)
 stopOriginal = ttk.Button(theme, text="Stop theme", command=stopThemeAudio)
 playFragment = ttk.Button(audio_fragment, text="Play/Pause clip", command=playFragmentAudio)
 stopFragment = ttk.Button(audio_fragment, text="Stop clip", command=stopFragmentAudio)
-test_button = ttk.Button(clasify, text="test", command=predict)
-test_result = ttk.Label(clasify, text=result, font=('Times, 14'))
-specto = ImageTk.PhotoImage(Image.open('./GUI/img/spectrogram.png'))
-mel = ttk.Label(audio_fragment, image=specto)
+test_button = ttk.Button(classify, text="test", command=predict)
+test_result = ttk.Label(classify, text=result, font=('Times, 14'))
+if (os.path.exists('./GUI/img/spectrogram.png')):
+  spectro = ImageTk.PhotoImage(Image.open('./GUI/img/spectrogram.png'))
+  
+mel = ttk.Label(audio_fragment, image=spectro)
 content.grid(column=0, row=0, sticky=(tk.N, tk.S, tk.E, tk.W))
 title.grid(column= 0, row= 0, columnspan=2)
 theme.grid(column=1, row=1)
-clasify.grid(column=0, row=3, columnspan=2)
+classify.grid(column=0, row=3, columnspan=2)
 audio_fragment.grid(column=0, row=2, columnspan=4)
 playOriginal.grid(column=2,row=2)
 stopOriginal.grid(column=2,row=3)
